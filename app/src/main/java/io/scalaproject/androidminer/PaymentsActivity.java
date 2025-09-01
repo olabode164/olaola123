@@ -89,7 +89,7 @@ public class PaymentsActivity extends BaseActivity implements PaymentInfoAdapter
 
     @Override
     public void onShowPayment(final PaymentItem paymentItem) {
-        String paymentURL = "https://explorer.scalaproject.io/tx?tx_info=" + paymentItem.mHash;
+        String paymentURL = "https://explorer.scala.network/tx?tx_info=" + paymentItem.mHash;
         Uri uri = Uri.parse(paymentURL);
         startActivity(new Intent(Intent.ACTION_VIEW, uri));
     }

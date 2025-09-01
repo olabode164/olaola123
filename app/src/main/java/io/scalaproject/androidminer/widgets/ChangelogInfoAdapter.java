@@ -4,6 +4,7 @@
 
 package io.scalaproject.androidminer.widgets;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +48,7 @@ public class ChangelogInfoAdapter extends RecyclerView.Adapter<ChangelogInfoAdap
         return changelogItems.size();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void dataSetChanged() {
         notifyDataSetChanged();
     }

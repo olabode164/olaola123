@@ -7,6 +7,7 @@ package io.scalaproject.androidminer.api;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,32 +26,21 @@ import io.scalaproject.androidminer.network.Json;
 
 public final class ProviderManager {
 
-    // Increment the version number when the pool json structure changes
-    static private final String version = "1";
+    // Increment the version number when app.json content changes
+    static private final String version = "2";
 
     static private final String DEFAULT_POOLS_REPOSITORY = "https://raw.githubusercontent.com/scala-network/MobileMiner/master/app.json";
-
-    // USAGE: When the DEFAULT_POOLS_REPOSITORY file is modified, we need to upload the new file
-    //        to the IPNS gateway as well. This is to avoid having to release a new version of the app
-    //        every time the data changes.
-    static private final String IPNS_NAME = "pool-list.scalaproject.io";
-    static private final String[] POOLS_REPOSITORY_IPNS_GATEWAYS = {
-            "https://dweb.link/ipns/",
-            "https://ipfs.io/ipns/",
-            "https://gateway.ipfs.io/ipns/",
-            "https://cloudflare-ipfs.com/ipns/"
-    };
 
     static private final String DEFAULT_POOL = "{\n" +
             "\"pools\": [\n" +
             "{\n" +
-            "\"key\": \"Scala Project (Official Pool)\",\n" +
-            "\"pool\": \"mine.scalaproject.io\",\n" +
+            "\"key\": \"Scala (Official Pool)\",\n" +
+            "\"pool\": \"mine.scala.network\",\n" +
             "\"port\": \"3333\",\n" +
             "\"ports\": [\"3333\", \"5555\", \"7777\", \"8888\"],\n" +
             "\"type\": 3,\n" +
-            "\"url\": \"https://pool.scalaproject.io\",\n" +
-            "\"ip\": \"95.111.237.231\"\n" +
+            "\"url\": \"https://pool.scala.network\",\n" +
+            "\"ip\": \"95.217.44.235\"\n" +
             "} ]\n" +
             "}";
 
@@ -83,7 +73,7 @@ public final class ProviderManager {
         if(poolItem != null && poolItem.isOfficial())
             return Utils.getCroppedBitmap(Utils.getBitmap(context, R.mipmap.ic_logo_blue));
 
-        return Utils.getCroppedBitmap(Utils.getBitmap(context, R.drawable.ic_pool_default));
+        return Utils.getCroppedBitmap(Utils.getBitmap(context, R.drawable.mining_pool_icon));
     }
 
     static public void loadPools(Context context) {
@@ -209,19 +199,7 @@ public final class ProviderManager {
             if(Tools.isURLReachable(DEFAULT_POOLS_REPOSITORY))
                 jsonString  = Json.fetch(DEFAULT_POOLS_REPOSITORY);
 
-            // If GitHub is not available or is blocked by firewalls, use IPFS gateways
-            if(jsonString.isEmpty()) {
-                for (String strPoolURLDir : POOLS_REPOSITORY_IPNS_GATEWAYS) {
-                    String strPoolURL = strPoolURLDir + IPNS_NAME;
-                    if(Tools.isURLReachable(strPoolURL)) {
-                        jsonString = Json.fetch(strPoolURL);
-                        if (!jsonString.isEmpty())
-                            break;
-                    }
-                }
-            }
-
-            // None of the URL can be reached. Load default data but don't cache it.
+            // The URL can be reached. Load default data but don't cache it.
             if(jsonString.isEmpty()) {
                 useDefaultPool = true;
                 jsonString = DEFAULT_POOL;

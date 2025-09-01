@@ -17,6 +17,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 public class WizardHomeActivity extends BaseActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -33,31 +35,37 @@ public class WizardHomeActivity extends BaseActivity {
         View view = findViewById(android.R.id.content).getRootView();
 
         String sDisclaimerText = getResources().getString(R.string.disclaimer_agreement);
-        String sDiclaimer = getResources().getString(R.string.disclaimer);
+        String sDisclaimer = getResources().getString(R.string.disclaimer);
 
-        SpannableString ss = new SpannableString(sDisclaimerText);
-        ClickableSpan clickableSpan = new ClickableSpan() {
-            @Override
-            public void onClick(View textView) {
-                showDisclaimer();
-            }
-
-            @Override
-            public void updateDrawState(TextPaint ds) {
-                super.updateDrawState(ds);
-                ds.setUnderlineText(false);
-            }
-        };
-
-        int iStart = sDisclaimerText.indexOf(sDiclaimer);
-        int iEnd = iStart + sDiclaimer.length();
-        ss.setSpan(clickableSpan, iStart, iEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        SpannableString ss = getSpannableString(sDisclaimerText, sDisclaimer);
 
         TextView tvDisclaimer = view.findViewById(R.id.disclaimer);
         tvDisclaimer.setText(ss);
         tvDisclaimer.setMovementMethod(LinkMovementMethod.getInstance());
         tvDisclaimer.setLinkTextColor(getResources().getColor(R.color.c_blue));
         tvDisclaimer.setHighlightColor(Color.TRANSPARENT);
+    }
+
+    @NonNull
+    private SpannableString getSpannableString(String sDisclaimerText, String sDisclaimer) {
+        SpannableString ss = new SpannableString(sDisclaimerText);
+        ClickableSpan clickableSpan = new ClickableSpan() {
+            @Override
+            public void onClick(@NonNull View textView) {
+                showDisclaimer();
+            }
+
+            @Override
+            public void updateDrawState(@NonNull TextPaint ds) {
+                super.updateDrawState(ds);
+                ds.setUnderlineText(false);
+            }
+        };
+
+        int iStart = sDisclaimerText.indexOf(sDisclaimer);
+        int iEnd = iStart + sDisclaimer.length();
+        ss.setSpan(clickableSpan, iStart, iEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return ss;
     }
 
     public void onEnterAddress(View view) {

@@ -22,6 +22,7 @@
 
 package io.scalaproject.androidminer.dialogs;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
@@ -53,7 +54,7 @@ public class ProgressDialog extends AlertDialog {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        final View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_progress, null);
+        @SuppressLint("InflateParams") final View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_progress, null);
 
         pbCircle = view.findViewById(R.id.pbCircle);
         tvMessage = view.findViewById(R.id.tvMessage);

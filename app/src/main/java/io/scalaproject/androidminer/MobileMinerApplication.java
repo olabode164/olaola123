@@ -16,13 +16,11 @@ import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
 import org.acra.ACRA;
-import org.acra.annotation.AcraCore;
-import org.acra.annotation.AcraMailSender;
+import org.acra.config.CoreConfigurationBuilder;
+import org.acra.config.MailSenderConfigurationBuilder;
 
 import static io.scalaproject.androidminer.MainActivity.contextOfApplication;
 
-@AcraCore(buildConfigClass = BuildConfig.class)
-@AcraMailSender(mailTo = "hello@scalaproject.io")
 public class MobileMinerApplication extends Application implements LifecycleObserver {
     @Override
     public void onCreate() {
@@ -37,17 +35,20 @@ public class MobileMinerApplication extends Application implements LifecycleObse
     protected void attachBaseContext(Context context) {
         super.attachBaseContext(context);
 
-        ACRA.init(this);
-
         SharedPreferences preferences = getSharedPreferences(getPackageName() + "_preferences", MODE_PRIVATE);
         Config.initialize(preferences);
 
-        ACRA.getErrorReporter().setEnabled(Config.read(Config.CONFIG_SEND_DEBUG_INFO, "0").equals("1"));
-    }
+        // Initialize ACRA
+        ACRA.init(this, new CoreConfigurationBuilder()
+                .withBuildConfigClass(BuildConfig.class)
+                .withPluginConfigurations(
+                        new MailSenderConfigurationBuilder()
+                                .withMailTo("support@scala.network")
+                                .withSubject("Scala Miner App Crash Report")
+                                .build()
+                )
+        );
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    public void onMoveToBackground() {
-        if(MainActivity.isDeviceMiningBackground())
-            Utils.showToast(contextOfApplication, getResources().getString(R.string.miningbackground), Toast.LENGTH_SHORT);
+        ACRA.getErrorReporter().setEnabled(Config.read(Config.CONFIG_SEND_DEBUG_INFO, "0").equals("1"));
     }
 }

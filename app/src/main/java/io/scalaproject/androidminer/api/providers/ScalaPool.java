@@ -109,16 +109,19 @@ public class ScalaPool extends ProviderAbstract {
 
         String wallet = getWalletAddress();
         Log.i(LOG_TAG, "Wallet: " + wallet);
-        if(wallet.equals("")) {
+        if(wallet.isEmpty()) {
             return;
         }
 
         try {
             String url = mPoolItem.getApiUrl() + "/stats_address?address=" + getWalletAddress();
-
             String dataWallet  = Json.fetch(url);
-
             JSONObject joStatsAddress = new JSONObject(dataWallet);
+
+            String payoutUrl = mPoolItem.getApiUrl() +  "/get_miner_payout_level?address=" + getWalletAddress();
+            String payoutData = Json.fetch(payoutUrl);
+            JSONObject joPayoutData = new JSONObject(payoutData);
+            mBlockData.pool.minPayout = joPayoutData.optString("level", "100.00");
 
             if(!joStatsAddress.has("stats")) {
                 mBlockData.miner = new ProviderData.Miner();

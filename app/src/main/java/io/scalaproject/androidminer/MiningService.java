@@ -31,7 +31,9 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -56,6 +58,8 @@ import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -83,7 +87,7 @@ public class MiningService extends Service {
     private String lastOutput = "";
     private static RequestQueue reqQueue;
 
-    private final static String API_IP = "https://json.geoiplookup.io/";
+    private final static String API_IP = "http://ip-api.com/json/";
 
     @Override
     public void onCreate()
@@ -119,7 +123,6 @@ public class MiningService extends Service {
     }
 
     public void setMiningServiceStateListener(MiningServiceStateListener listener) {
-        if (this.listener != null) this.listener = null;
         this.listener = listener;
     }
 
@@ -181,7 +184,7 @@ public class MiningService extends Service {
 
         for (int i = 0; i < cores; i++) {
             for (int j = 0; j < threads; j++) {
-                if (!cpuConfig.toString().equals("")) {
+                if (!cpuConfig.toString().isEmpty()) {
                     cpuConfig.append(",");
                 }
                 cpuConfig.append("[").append(intensity).append(",").append(i).append("]");
@@ -191,7 +194,7 @@ public class MiningService extends Service {
         return "[" + cpuConfig + "]";
     }
 
-    static class MiningConfig {
+    public static class MiningConfig {
         String username, pool, password, algo, assetExtension, cpuConfig, poolHost, poolPort;
         int cores, threads, intensity, legacyThreads, legacyIntensity;
     }
@@ -211,6 +214,7 @@ public class MiningService extends Service {
         config.legacyIntensity = intensity;
 
         assert pi != null;
+        pi.sanitize();
         config.poolHost = pi.getPool();
         config.poolPort = pi.getPort();
 
@@ -250,7 +254,7 @@ public class MiningService extends Service {
 
         try {
             JSONObject response = future.get(5, TimeUnit.SECONDS); // Sync call
-            hostIP = response.optString("ip");
+            hostIP = response.optString("query");
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             e.printStackTrace();
         }
@@ -263,36 +267,29 @@ public class MiningService extends Service {
 
     public void startMining(MiningConfig config) {
         stopMining();
-        new startMiningAsync().execute(config);
+        startMiningAsync(config);
     }
 
-    class startMiningAsync extends AsyncTask<MiningConfig, Void, String> {
+    public void startMiningAsync(MiningConfig config) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
 
-        String getPoolHost() {
-
-            PoolItem pi = ProviderManager.getSelectedPool();
-            assert pi != null;
-            return getIpByHost(pi);
-        }
-
-        private MiningConfig config;
-
-        protected String doInBackground(MiningConfig... config) {
-
+        executor.execute(() -> {
             try {
-                this.config = config[0];
-                this.config.pool = getPoolHost();
-                return "success";
+                PoolItem pi = ProviderManager.getSelectedPool();
+                if (pi == null) return;
+
+                config.pool = getIpByHost(pi);
+
+                handler.post(() -> {
+                    copyMinerFiles();
+                    startMiningProcess(config);
+                });
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return null;
-        }
-
-        protected void onPostExecute(String result) {
-            copyMinerFiles();
-            startMiningProcess(this.config);
-        }
+        });
     }
 
     public void startMiningProcess(MiningConfig config) {
@@ -336,7 +333,7 @@ public class MiningService extends Service {
             outputHandler = new MiningService.OutputReaderThread(process.getInputStream());
             outputHandler.start();
 
-            inputHandler = new MiningService.InputReaderThread(process.getOutputStream());
+            inputHandler = new InputReaderThread(process.getOutputStream());
             inputHandler.start();
 
             if (procMon != null) {
@@ -392,15 +389,15 @@ public class MiningService extends Service {
     }
 
     private class OutputReaderThread extends Thread {
-        private InputStream inputStream;
-        private StringBuilder output = new StringBuilder();
+        private final InputStream inputStream;
+        private final StringBuilder output = new StringBuilder();
 
         OutputReaderThread(InputStream inputStream) {
             this.inputStream = inputStream;
         }
 
         private void processLogLine(String line) {
-            output.append(line).append(System.getProperty("line.separator"));
+            output.append(line).append(System.lineSeparator());
 
             String lineCompare = line.toLowerCase();
             if (lineCompare.contains("accepted")) {
@@ -449,7 +446,7 @@ public class MiningService extends Service {
             }
 
             if (output.length() > Config.logMaxLength) {
-                output.delete(0, output.indexOf(Objects.requireNonNull(System.getProperty("line.separator")), Config.logPruneLength) + 1);
+                output.delete(0, output.indexOf(Objects.requireNonNull(System.lineSeparator()), Config.logPruneLength) + 1);
             }
 
             raiseMiningServiceStatusChange(line, speed, max, accepted, difficulty, connection);
@@ -478,8 +475,8 @@ public class MiningService extends Service {
         }
     }
 
-    private class InputReaderThread extends Thread {
-        private OutputStream outputStream;
+    private static class InputReaderThread extends Thread {
+        private final OutputStream outputStream;
         private BufferedWriter writer;
 
         InputReaderThread(OutputStream outputStream) {
@@ -517,17 +514,4 @@ public class MiningService extends Service {
             }
         }
     }
-
-    /*public boolean isMiningProcessAlive() {
-        try {
-            if(process != null) {
-                process.exitValue();
-            }
-        } catch(IllegalThreadStateException ignored) {
-            // Mining process is alive
-            return true;
-        }
-
-        return false;
-    }*/
 }

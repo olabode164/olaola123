@@ -44,6 +44,8 @@ import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashMap;
@@ -95,7 +97,6 @@ public class Tools {
     }
 
     static void copyDirectoryContents(Context context, String assetFilePath, String localFilePath) {
-
         String[] folder;
 
         try {
@@ -224,10 +225,12 @@ public class Tools {
 
         Log.i(LOG_TAG, "CONFIG: " + config);
 
-        try (PrintWriter writer = new PrintWriter(new FileOutputStream(privatePath + "/config.json"))) {
-            writer.write(config);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try (PrintWriter writer = new PrintWriter(Files.newOutputStream(Paths.get(privatePath + "/config.json")))) {
+                writer.write(config);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -267,15 +270,10 @@ public class Tools {
     }
 
     public static String getABI() {
-        String abiString;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            abiString = Build.SUPPORTED_ABIS[0];
-        } else {
-            abiString = Build.CPU_ABI;
-        }
-
-        return abiString.toLowerCase().trim();
+        return Build.SUPPORTED_ABIS[0].toLowerCase().trim();
     }
+
+    //private static String cachedSysFile = null;
 
     static private final String[] CPU_TEMP_SYS_FILE = {
             "/sys/devices/virtual/thermal/thermal_zone0/temp",
@@ -306,9 +304,81 @@ public class Tools {
             "/sys/class/hwmon/hwmonX/temp1_input"
     };
 
-    static private String sCPUTempSysFile = "";
+    public static float getCurrentCPUTemperature() {
+        // 1. Try dynamic detection
+        float temp = getDynamicCpuTemperature();
+        if (temp > 0f)
+            return temp;
 
-    static float getCurrentCPUTemperature() {
+        // 2. Try fallback hardcoded paths
+        temp = getFallbackCpuTemperature();
+        if (temp > 0f)
+            return temp;
+
+        return 0f;
+    }
+
+    private static float getDynamicCpuTemperature() {
+        File thermalDir = new File("/sys/class/thermal");
+        File[] zones = thermalDir.listFiles((dir, name) -> name.startsWith("thermal_zone"));
+        if (zones == null) return 0f;
+
+        for (File zone : zones) {
+            try {
+                String type = readLine(new File(zone, "type"));
+                if (type != null && (type.toLowerCase().contains("cpu") || type.toLowerCase().contains("soc"))) {
+                    float temp = readTemperature(new File(zone, "temp"));
+                    if (temp > 0f && temp < 100f) {
+                        //cachedSysFile = new File(zone, "temp").getAbsolutePath();
+                        return temp;
+                    }
+                }
+            } catch (IOException ignored) {
+            }
+        }
+
+        return 0f;
+    }
+
+    private static float getFallbackCpuTemperature() {
+        for (String path : CPU_TEMP_SYS_FILE) {
+            float temp = readTemperature(new File(path));
+            if (temp > 0f && temp < 100f) {
+                //cachedSysFile = path;
+                return temp;
+            }
+        }
+        return 0f;
+    }
+
+    private static float readTemperature(File file) {
+        try {
+            float temp = Float.parseFloat(readLine(file));
+            if (temp > 1000f && Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+                temp /= 1000f;
+            }
+            return temp;
+        } catch (Exception e) {
+            return 0f;
+        }
+    }
+
+    private static String readLine(File file) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        String line = br.readLine();
+        br.close();
+        return line;
+    }
+
+
+
+
+
+
+
+    /*static private String sCPUTempSysFile = "";
+
+    static float getCurrentCPUTemperature2() {
         if (sCPUTempSysFile.isEmpty())
             return getCPUTempSysFile();
 
@@ -363,7 +433,7 @@ public class Tools {
 
         sCPUTempSysFile = "err";
         return 0.0f;
-    }
+    }*/
 
     static public String parseCurrency(String value, long coinUnits, long denominationUnits, String symbol) {
         double d2 = parseCurrencyFloat(value, coinUnits, denominationUnits);

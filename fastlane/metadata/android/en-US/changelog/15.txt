@@ -1,0 +1,3 @@
+- Update main framework and libraries
+- Refactor and update code
+- Implement fixes for better stability

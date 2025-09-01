@@ -30,16 +30,16 @@
     <string name="mininglog">Mining Log</string>
     <string name="value_empty">We need this!</string>
 
-    <string name="mobileminerLink">https://mobileminer.scalaproject.io</string>
-    <string name="privacyPolicyLink">https://scalaproject.io/miner-privacy-policy.html</string>
+    <string name="mobileminerLink">https://scala.network/mobile-miner/</string>
+    <string name="privacyPolicyLink">https://scala.network/privacy-policy/</string>
     <string name="discordLink">https://discord.gg/djAFVvy</string>
     <string name="mediumLink">https://medium.com/scala-network</string>
     <string name="twitterLink">https://twitter.com/scalahq</string>
     <string name="redditLink">https://www.reddit.com/r/ScalaNetwork/</string>
     <string name="telegramLink">https://t.me/scalaofficial</string>
-    <string name="emailLink">mailto:hello@scalaproject.io</string>
-    <string name="ScalaLinkClean">https://scalaproject.io</string>
-    <string name="amaycPostLink">https://amayc.scalaproject.io/</string>
+    <string name="emailLink">mailto:hello@scala.network</string>
+    <string name="ScalaLinkClean">https://scala.network</string>
+    <string name="amaycPostLink">https://amayc.scala.network/</string>
     <string name="maxtemperaturereached">Temperature threshold reached!</string>
     <string name="resumedmining">Temperatures have reached safe levels. Mining resumed.</string>
     <string name="pauseonmining">Put device on charge to enable mining.</string>
@@ -94,8 +94,8 @@
     <string name="newSettings">Restart mining process to apply the new settings.</string>
     <string name="closeApp">If you close the app, the mining process will be stopped.</string>
     <string name="newparametersapplied">You will have to restart the mining process in order for the new parameters to be applied.</string>
-    <string name="hashrate_share">Take a look at my Scala Mobile Miner stats! I\'m currently mining on my Android device. Download the app to start mining on your phone: https://mobileminer.scalaproject.io/</string>
-    <string name="app_share">"Did you know you can mine cryptocurrencies on any Android device? Download the app to start mining on your phone: https://mobileminer.scalaproject.io/</string>
+    <string name="hashrate_share">Take a look at my Scala Mobile Miner stats! I\'m currently mining on my Android device. Download the app to start mining on your phone: https://scala.network/mobile-miner/</string>
+    <string name="app_share">"Did you know you can mine cryptocurrencies on any Android device? Download the app to start mining on your phone: https://scala.network/mobile-miner/</string>
     <string name="share_title">Scala Mobile Miner</string>
     <string name="share_via">Share via</string>
     <string name="running_status">Running</string>
@@ -221,5 +221,12 @@
     <string name="address_label">Specify the wallet address that will receive the mining rewards.</string>
     <string name="send_address_resolve_ud">Resolving Unstoppable Domains address...</string>
     <string name="mining_address_help">Specify the wallet address that will receive the mining rewards. Unstoppable Domains addresses are supported too, for example: myaddress.crypto. Make sure XLA is defined in your UD profile.</string>
+    <string name="host">Host</string>
+    <string name="point_camera_at_qr_code">Point camera at QR code</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="place_qr_code_inside">Place QR Code inside the frame to scan your Scala wallet address</string>
+    <string name="scanning_qr_code">Scanning QR Code...</string>
+    <string name="scan_qr_code">SCAN QR CODE</string>
 
 </resources>

@@ -29,11 +29,8 @@ class SimpleTriangleIndicator(context: Context) : Indicator<SimpleTriangleIndica
         return indicatorTop + width
     }
 
-    override fun draw(canvas: Canvas, degree: Float) {
-        canvas.save()
-        canvas.rotate(90f + degree, getCenterX(), getCenterY())
+    override fun draw(canvas: Canvas) {
         canvas.drawPath(indicatorPath, indicatorPaint)
-        canvas.restore()
     }
 
     override fun updateIndicator() {
@@ -44,7 +41,9 @@ class SimpleTriangleIndicator(context: Context) : Indicator<SimpleTriangleIndica
         indicatorPath.lineTo(getCenterX() + width, indicatorTop + width)
         indicatorPath.moveTo(0f, 0f)
 
-        indicatorPaint.color = color
+        val endColor = Color.argb(0, Color.red(color), Color.green(color), Color.blue(color))
+        val linearGradient = LinearGradient(getCenterX(), indicatorTop, getCenterX(), indicatorTop + width, color, endColor, Shader.TileMode.CLAMP)
+        indicatorPaint.shader = linearGradient
     }
 
     override fun setWithEffects(withEffects: Boolean) {

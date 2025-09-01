@@ -4,7 +4,10 @@
 
 package io.scalaproject.androidminer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 
@@ -44,9 +47,15 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onPause();
     }
 
+    @SuppressLint("SourceLockedOrientationActivity")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Apply orientation restriction for mobile devices only
+        if (!isTabletOrChromebook()) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
 
         final Thread.UncaughtExceptionHandler oldHandler = Thread.getDefaultUncaughtExceptionHandler();
 
@@ -67,6 +76,20 @@ public abstract class BaseActivity extends AppCompatActivity {
                     System.exit(2); // Prevents the service/app from freezing
             }
         });
+    }
+
+    private boolean isTabletOrChromebook() {
+        Configuration config = getResources().getConfiguration();
+
+        // Check if it's a large or xlarge screen
+        int screenSize = config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+        boolean isLargeScreen = screenSize == Configuration.SCREENLAYOUT_SIZE_LARGE ||
+                screenSize == Configuration.SCREENLAYOUT_SIZE_XLARGE;
+
+        // Check for hardware keyboard (common on Chromebooks)
+        boolean hasKeyboard = config.keyboard != Configuration.KEYBOARD_NOKEYS;
+
+        return isLargeScreen || hasKeyboard;
     }
 
     public void showProgressDialog(int msgId) {

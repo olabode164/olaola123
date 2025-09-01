@@ -4,6 +4,7 @@
 
 package io.scalaproject.androidminer.widgets;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.AttributeSet;
@@ -64,6 +65,7 @@ public class PoolView extends LinearLayout {
         inflater.inflate(R.layout.view_pool, this);
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onFinishInflate() {
         super.onFinishInflate();
@@ -104,7 +106,7 @@ public class PoolView extends LinearLayout {
             ivIcon.getLayoutParams().height = dim;
             ivIcon.getLayoutParams().width = dim;
 
-            ivIcon.setImageBitmap(Utils.getCroppedBitmap(Utils.getBitmap(getContext(), R.drawable.ic_pool_default)));
+            ivIcon.setImageBitmap(Utils.getCroppedBitmap(Utils.getBitmap(getContext(), R.drawable.mining_pool_icon)));
         }
     }
 }

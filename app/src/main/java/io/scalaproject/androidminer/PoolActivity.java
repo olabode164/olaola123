@@ -11,8 +11,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,6 +28,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -37,15 +39,12 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import io.scalaproject.androidminer.api.PoolItem;
 import io.scalaproject.androidminer.api.ProviderManager;
@@ -141,6 +140,16 @@ public class PoolActivity extends BaseActivity
 
         Utils.hideKeyboard(this);
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                SettingsFragment.selectedPoolTmp = selectedPool;
+                ProviderManager.saveUserDefinedPools(getApplicationContext());
+
+                finish();
+            }
+        });
+
         refresh();
     }
 
@@ -155,15 +164,6 @@ public class PoolActivity extends BaseActivity
                 diag.show();
             }
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        SettingsFragment.selectedPoolTmp = selectedPool;
-
-        ProviderManager.saveUserDefinedPools(getApplicationContext());
-
-        super.onBackPressed();
     }
 
     private void updateSelectedPoolLayout() {
@@ -182,20 +182,14 @@ public class PoolActivity extends BaseActivity
         if(!selectedPoolName.isEmpty()) {
             for (PoolItem poolItem : allPools) {
                 if (selectedPoolName.equals(poolItem.getKey())) {
-                    //selectedPoolView = rvPools.getChildAt(i);
                     selectedPool = poolItem;
                 }
             }
         }
     }
 
-    private AsyncLoadPools asyncLoadPools = null;
-
     private void refresh() {
-        if (asyncLoadPools != null) return; // ignore refresh request as one is ongoing
-
-        asyncLoadPools = new AsyncLoadPools();
-        asyncLoadPools.execute();
+        loadPoolsInBackground();
     }
 
     @Override
@@ -214,19 +208,19 @@ public class PoolActivity extends BaseActivity
     @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onContextInteraction(MenuItem item, PoolItem poolItem) {
-        switch (item.getItemId()) {
-            case R.id.action_edit_pool:
-                EditDialog diag = createEditDialog(poolItem);
-                if (diag != null) {
-                    diag.show();
-                }
+        int itemId = item.getItemId();
 
-                break;
-            case R.id.action_delete_pool:
-                onDeletePool(poolItem);
-                break;
-            default:
-                return super.onContextItemSelected(item);
+        if(itemId == R.id.action_edit_pool) {
+            EditDialog diag = createEditDialog(poolItem);
+            if (diag != null) {
+                diag.show();
+            }
+        }
+        else if(itemId == R.id.action_delete_pool) {
+            onDeletePool(poolItem);
+        }
+        else {
+            return super.onContextItemSelected(item);
         }
 
         return true;
@@ -299,7 +293,7 @@ public class PoolActivity extends BaseActivity
                 poolEdit.setKey(poolName);
             }
 
-            final String poolUrl = Objects.requireNonNull(etPoolURL.getEditText()).getText().toString().trim();
+            String poolUrl = Objects.requireNonNull(etPoolURL.getEditText()).getText().toString().trim();
             if (poolUrl.isEmpty()) {
                 etPoolURL.setError(getString(R.string.value_empty));
                 return false;
@@ -319,6 +313,8 @@ public class PoolActivity extends BaseActivity
             } else {
                 poolEdit.setSelectedPort(spPoolPort.getSelectedItem().toString().trim());
             }
+
+            poolEdit.sanitize();
 
             return true;
         }
@@ -537,7 +533,7 @@ public class PoolActivity extends BaseActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == EditDialog.GET_FROM_GALLERY & resultCode == Activity.RESULT_OK) {
             // Already save the cropped image
-            Bitmap bitmap = Utils.getCroppedBitmap((Bitmap) data.getExtras().get("data"));
+            Bitmap bitmap = Utils.getCroppedBitmap((Bitmap) Objects.requireNonNull(data.getExtras().get("data")));
 
             poolEdit.setIcon(bitmap);
 
@@ -574,61 +570,41 @@ public class PoolActivity extends BaseActivity
         }
     }
 
-    @SuppressLint("StaticFieldLeak")
-    private class AsyncLoadPools extends AsyncTask<Void, PoolItem, Boolean> {
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
+    private void loadPoolsInBackground() {
+        poolsAdapter.setPools(null);
+        poolsAdapter.allowClick(false);
 
-            poolsAdapter.setPools(null);
-            poolsAdapter.allowClick(false);
+        selectedPool = ProviderManager.getSelectedPool();
 
-            showProgressDialog(R.string.loading_pools);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
 
-            selectedPool = ProviderManager.getSelectedPool();
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            allPools.clear();
-
+        executor.execute(() -> {
             PoolItem[] pools = ProviderManager.getPools(getApplicationContext());
             for (PoolItem poolItem : pools) {
                 StringRequest stringRequest = poolItem.getInterface().getStringRequest(poolsAdapter);
                 mPoolQueue.add(stringRequest);
-
                 allPools.add(poolItem);
             }
 
-            return true;
+            handler.post(() -> {
+                if (Thread.currentThread().isInterrupted()) return;
+                complete();
+            });
+        });
+    }
+
+    private void complete() {
+        if (ProviderManager.useDefaultPool) {
+            Context context = getApplicationContext();
+            Utils.showToast(context, context.getResources().getString(R.string.unreachable_pools_repo), Toast.LENGTH_LONG);
         }
 
-        @Override
-        protected void onPostExecute(Boolean result) {
-            complete();
-        }
+        pullToRefresh.setRefreshing(false);
+        poolsAdapter.setPools(allPools);
+        poolsAdapter.allowClick(true);
 
-        @Override
-        protected void onCancelled(Boolean result) {
-            complete();
-        }
-
-        private void complete() {
-            if(ProviderManager.useDefaultPool) {
-                Context context = getApplicationContext();
-                Utils.showToast(context, context.getResources().getString(R.string.unreachable_pools_repo), Toast.LENGTH_LONG);
-            }
-
-            asyncLoadPools = null;
-
-            pullToRefresh.setRefreshing(false);
-
-            poolsAdapter.setPools(allPools);
-            poolsAdapter.allowClick(true);
-
-            rvPools.post(PoolActivity.this::updateSelectedPoolLayout);
-
-            dismissProgressDialog();
-        }
+        rvPools.post(PoolActivity.this::updateSelectedPoolLayout);
+        dismissProgressDialog();
     }
 }

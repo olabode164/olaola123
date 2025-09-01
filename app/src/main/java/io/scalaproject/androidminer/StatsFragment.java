@@ -205,7 +205,7 @@ public class StatsFragment extends Fragment {
         if(getContext() == null)
             return;
 
-        if(Config.read(Config.CONFIG_ADDRESS).equals("")) {
+        if(Config.read(Config.CONFIG_ADDRESS).isEmpty()) {
             Utils.showToast(getContext(),"Wallet address is empty.", Toast.LENGTH_LONG);
             return;
         }

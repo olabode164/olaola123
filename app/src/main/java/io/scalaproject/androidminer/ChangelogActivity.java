@@ -42,7 +42,7 @@ public class ChangelogActivity extends BaseActivity {
             @Override
             public void onButtonMain(int type) {
                 if (type == Toolbar.BUTTON_MAIN_BACK) {
-                    onBackPressed();
+                    getOnBackPressedDispatcher().onBackPressed();
                 }
             }
 
@@ -83,11 +83,5 @@ public class ChangelogActivity extends BaseActivity {
         }
 
         Utils.hideKeyboard(this);
-    }
-
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
     }
 }

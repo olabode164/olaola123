@@ -66,7 +66,7 @@ public class HelpFragment extends DialogFragment {
     @NotNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        final View view = LayoutInflater.from(getActivity()).inflate(R.layout.fragment_help, null);
+        final View view = getLayoutInflater().inflate(R.layout.fragment_help, null);
 
         int helpId = 0;
         Bundle arguments = getArguments();
@@ -76,7 +76,7 @@ public class HelpFragment extends DialogFragment {
         if (helpId > 0)
             ((TextView) view.findViewById(R.id.tvHelp)).setText(Html.fromHtml(getString(helpId)));
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(Objects.requireNonNull(getActivity()), R.style.MaterialAlertDialogCustom);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireActivity(), R.style.MaterialAlertDialogCustom);
         builder.setView(view);
         builder.setNegativeButton(R.string.ok,
                 new DialogInterface.OnClickListener() {

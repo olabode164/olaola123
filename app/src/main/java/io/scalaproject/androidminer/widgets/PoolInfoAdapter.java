@@ -4,6 +4,7 @@
 
 package io.scalaproject.androidminer.widgets;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.TypedValue;
@@ -85,6 +86,7 @@ public class PoolInfoAdapter extends RecyclerView.Adapter<PoolInfoAdapter.ViewHo
         dataSetChanged(); // in case the poolitem has changed
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void dataSetChanged() {
         notifyDataSetChanged();
     }

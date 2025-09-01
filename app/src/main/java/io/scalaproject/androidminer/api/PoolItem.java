@@ -12,6 +12,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
 
+import androidx.annotation.NonNull;
+
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -160,6 +162,7 @@ public class PoolItem {
         }
     }
 
+    @NonNull
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -311,4 +314,16 @@ public class PoolItem {
             return o1.getKey().compareToIgnoreCase(o2.getKey());
         }
     };
+
+    public void sanitize() {
+        if(this.isUserDefined()) {
+            String poolUrl = this.mUrl.contains("http") ? this.mUrl : "https://" + this.mUrl;
+            this.setPoolUrl(poolUrl);
+
+            String poolNoUrl = poolUrl.replace("https://", "");
+            poolNoUrl = poolNoUrl.replace("http://", "");
+            poolNoUrl = poolNoUrl.replace("/", "");
+            this.setPool(poolNoUrl);
+        }
+    }
 }

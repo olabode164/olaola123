@@ -4,6 +4,7 @@
 
 package io.scalaproject.androidminer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ public class WizardSettingsActivity extends BaseActivity {
 
     private MaterialButtonToggleGroup tgTemperatureUnit;
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,7 +118,7 @@ public class WizardSettingsActivity extends BaseActivity {
         sbCores.setMax(cores-1);
         tvCoresMax.setText(Integer.toString(cores));
 
-        if (Config.read(Config.CONFIG_CORES).equals("")) {
+        if (Config.read(Config.CONFIG_CORES).isEmpty()) {
             sbCores.setProgress(suggested-1);
             tvCoresNb.setText(Integer.toString(suggested));
         } else {
@@ -137,7 +139,7 @@ public class WizardSettingsActivity extends BaseActivity {
         }
 
         // CPU Temp
-        if (!Config.read(Config.CONFIG_MAX_CPU_TEMP).equals("")) {
+        if (!Config.read(Config.CONFIG_MAX_CPU_TEMP).isEmpty()) {
             nMaxCPUTemp = Integer.parseInt(Config.read(Config.CONFIG_MAX_CPU_TEMP));
         }
 
@@ -145,7 +147,7 @@ public class WizardSettingsActivity extends BaseActivity {
         sbCPUTemp.setProgress(nProgress);
         updateCPUTemp();
 
-        if (!Config.read(Config.CONFIG_MAX_BATTERY_TEMP).equals("")) {
+        if (!Config.read(Config.CONFIG_MAX_BATTERY_TEMP).isEmpty()) {
             nMaxBatteryTemp = Integer.parseInt(Config.read(Config.CONFIG_MAX_BATTERY_TEMP));
         }
 
@@ -154,7 +156,7 @@ public class WizardSettingsActivity extends BaseActivity {
         sbBatteryTemp.setProgress(nProgress);
         updateBatteryTemp();
 
-        if (!Config.read(Config.CONFIG_COOLDOWN_THRESHOLD).equals("")) {
+        if (!Config.read(Config.CONFIG_COOLDOWN_THRESHOLD).isEmpty()) {
             nCooldownTheshold = Integer.parseInt(Config.read(Config.CONFIG_COOLDOWN_THRESHOLD));
         }
 
@@ -254,6 +256,7 @@ public class WizardSettingsActivity extends BaseActivity {
         tvBatteryMaxTemp.setText(tgTemperatureUnit.getCheckedButtonId() == R.id.btnFarehnheit ? Integer.toString(Utils.convertCelciusToFahrenheit(battery_temp)) : Integer.toString(battery_temp));
     }
 
+    @SuppressLint("SetTextI18n")
     private void updateCooldownThreshold() {
         tvCooldown.setText(Integer.toString(getCooldownTheshold()));
     }

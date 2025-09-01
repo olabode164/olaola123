@@ -9,6 +9,7 @@
 package io.scalaproject.androidminer;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -35,6 +36,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -58,6 +62,16 @@ import io.scalaproject.androidminer.widgets.PoolView;
 
 public class SettingsFragment extends Fragment {
 
+    private final ActivityResultLauncher<String> cameraPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    startQrCodeActivity();
+                } else {
+                    Context appContext = MainActivity.getContextOfApplication();
+                    Utils.showToast(appContext, "Camera permission denied.", Toast.LENGTH_LONG);
+                }
+            });
+
     private static final String LOG_TAG = "MiningSvc";
 
     private TextInputLayout tilAddress;
@@ -76,11 +90,13 @@ public class SettingsFragment extends Fragment {
 
     private SeekBar sbCPUTemp, sbBatteryTemp, sbCooldown, sbCores;
     private TextView tvCPUMaxTemp, tvBatteryMaxTemp, tvCooldown, tvCPUTempUnit, tvBatteryTempUnit, tvRefreshHashrateDelay;
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch swDisableTempControl, swPauseOnBattery, swPauseOnNetwork, swKeepScreenOnWhenMining, swSendDebugInformation;
 
     private ImageView ivDecreaseRefreshHashrateDelay, ivIncreaseRefreshHashrateDelay;
     private MaterialButtonToggleGroup tgTemperatureUnit;
 
+    @SuppressLint("SetTextI18n")
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -383,7 +399,7 @@ public class SettingsFragment extends Fragment {
                             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                     );
 
-                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(Objects.requireNonNull(getActivity()), R.style.MaterialAlertDialogCustom);
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireActivity(), R.style.MaterialAlertDialogCustom);
                     builder.setTitle(ssBuilder)
                             .setMessage(Html.fromHtml(getString(R.string.warning_temperature_control_prompt)))
                             .setCancelable(false)
@@ -408,7 +424,7 @@ public class SettingsFragment extends Fragment {
             public void onClick(View view) {
                 // if mining, ask to restart
                 if(MainActivity.isDeviceMiningBackground()) {
-                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(Objects.requireNonNull(getContext()), R.style.MaterialAlertDialogCustom);
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext(), R.style.MaterialAlertDialogCustom);
                     builder.setTitle(getString(R.string.stopmining))
                             .setMessage(getString(R.string.newparametersapplied))
                             .setCancelable(true)
@@ -443,18 +459,7 @@ public class SettingsFragment extends Fragment {
         bQrCode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Context appContext = MainActivity.getContextOfApplication();
-                if (Build.VERSION.SDK_INT >= 23) {
-                    if (ContextCompat.checkSelfPermission(appContext, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                        requestPermissions(new String[]{Manifest.permission.CAMERA}, 100);
-                    }
-                    else {
-                        startQrCodeActivity();
-                    }
-                }
-                else {
-                    Utils.showToast(appContext, "This version of Android does not support QR Code.", Toast.LENGTH_LONG);
-                }
+                startQrCodeActivity();
             }
         });
 
@@ -462,7 +467,7 @@ public class SettingsFragment extends Fragment {
         btnMineScala.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(Objects.requireNonNull(getContext()), R.style.MaterialAlertDialogCustom);
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext(), R.style.MaterialAlertDialogCustom);
                 builder.setTitle(getString(R.string.supporttheproject))
                         .setMessage(getString(R.string.minetoscala))
                         .setCancelable(true)
@@ -522,7 +527,7 @@ public class SettingsFragment extends Fragment {
         ImageView ivDecreaseBatteryLevel = promptsView.findViewById(R.id.ivDecreaseBatteryLevel);
         ImageView ivIncreaseBatteryLevel = promptsView.findViewById(R.id.ivIncreaseBatteryLevel);
 
-        Switch swBatteryLevel = promptsView.findViewById(R.id.chkBatteryLevel);
+        @SuppressLint("UseSwitchCompatOrMaterialCode") Switch swBatteryLevel = promptsView.findViewById(R.id.chkBatteryLevel);
         swBatteryLevel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -552,6 +557,7 @@ public class SettingsFragment extends Fragment {
         ivIncreaseBatteryLevel.setColorFilter(enabled ? getResources().getColor(R.color.c_blue) : getResources().getColor(R.color.txt_inactive));
 
         ivDecreaseBatteryLevel.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onClick(View view) {
                 int level = Integer.parseInt(tvBatteryLevel.getText().toString());
@@ -568,6 +574,7 @@ public class SettingsFragment extends Fragment {
         });
 
         ivIncreaseBatteryLevel.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onClick(View view) {
                 int level = Integer.parseInt(tvBatteryLevel.getText().toString());
@@ -606,6 +613,7 @@ public class SettingsFragment extends Fragment {
         ivIncreaseRefreshHashrateDelay.setColorFilter(delay < Config.DefaultRefreshDelay ? getResources().getColor(R.color.c_blue) : getResources().getColor(R.color.txt_inactive));
     }
 
+    @SuppressLint("SetTextI18n")
     public void onDecreaseHashrateRefreshDelay() {
         int delay = Integer.parseInt(tvRefreshHashrateDelay.getText().toString());
         if(delay > 1)
@@ -752,6 +760,7 @@ public class SettingsFragment extends Fragment {
         tvBatteryMaxTemp.setText(tgTemperatureUnit.getCheckedButtonId() == R.id.btnFarehnheit ? Integer.toString(Utils.convertCelciusToFahrenheit(battery_temp)) : Integer.toString(battery_temp));
     }
 
+    @SuppressLint("SetTextI18n")
     private void updateCooldownThreshold() {
         tvCooldown.setText(Integer.toString(getCooldownTheshold()));
     }
@@ -763,19 +772,13 @@ public class SettingsFragment extends Fragment {
     }
 
     private void startQrCodeActivity() {
-        new IntentIntegrator(getActivity()).setOrientationLocked(false).setCaptureActivity(QrCodeScannerActivity.class).initiateScan();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NotNull String[] permissions, @NotNull int[] grantResults) {
-        Context appContext = MainActivity.getContextOfApplication();
-        if (requestCode == 100) {
-            if (permissions[0].equals(Manifest.permission.CAMERA) && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startQrCodeActivity();
-            }
-            else {
-                Utils.showToast(appContext,"Camera permission denied.", Toast.LENGTH_LONG);
-            }
+        // Check permission first
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent(getActivity(), QrCodeScannerActivity.class);
+            startActivity(intent);
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
         }
     }
 
@@ -790,7 +793,7 @@ public class SettingsFragment extends Fragment {
 
     private void requestFocus(View view) {
         if (view.requestFocus()) {
-            Objects.requireNonNull(getActivity()).getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
     }
 

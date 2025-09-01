@@ -21,6 +21,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -39,6 +42,16 @@ import io.scalaproject.androidminer.widgets.Toolbar;
 
 public class WizardAddressActivity extends BaseActivity {
     private TextView tvAddress;
+
+    private final ActivityResultLauncher<String> cameraPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    startQrCodeActivity();
+                } else {
+                    Context appContext = MainActivity.getContextOfApplication();
+                    Utils.showToast(appContext, "Camera permission denied.", Toast.LENGTH_LONG);
+                }
+            });
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -108,33 +121,23 @@ public class WizardAddressActivity extends BaseActivity {
     }
 
     public void onScanQrCode(View view) {
-        Context appContext = WizardAddressActivity.this;
-
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (ContextCompat.checkSelfPermission(appContext, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.CAMERA}, 100);
-            } else {
-                startQrCodeActivity();
-            }
-        } else if (Build.VERSION.SDK_INT >= 21) {
-            startQrCodeActivity();
-        } else {
-            Utils.showToast(appContext, "This version of Android does not support Qr Code.", Toast.LENGTH_LONG);
-        }
+        startQrCodeActivity();
     }
 
     private void startQrCodeActivity() {
-        Context appContext = WizardAddressActivity.this;
-
-        try {
-            new IntentIntegrator(this).setOrientationLocked(false).setCaptureActivity(QrCodeScannerActivity.class).initiateScan();
-        } catch (Exception e) {
-            Utils.showToast(appContext, e.getMessage(), Toast.LENGTH_SHORT);
+        // Check permission first
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent(WizardAddressActivity.this, QrCodeScannerActivity.class);
+            startActivity(intent);
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NotNull String[] permissions, @NotNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull @NotNull String[] permissions, int @NotNull [] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         Context appContext = WizardAddressActivity.this;
 
         if (requestCode == 100) {

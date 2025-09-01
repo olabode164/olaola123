@@ -26,6 +26,7 @@
     <color name="btn_icon_default">#c5d0d9</color>
     <color name="btn_icon_dark">#86939e</color>
     <color name="btn_bg_default">#444b57</color>
+    <color name="btn_bg_blue">#238BFF</color>
 
     <color name="input_bg_default">@color/bg_body</color>
 

@@ -24,7 +24,7 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="@android:color/transparent"
-            app:srcCompat="@drawable/ic_pool_default" />
+            app:srcCompat="@drawable/mining_pool_icon" />
 
     </LinearLayout>
 
@@ -51,7 +51,7 @@
         android:layout_height="wrap_content"
         android:textColor="@color/txt_secondary"
         android:textSize="12sp"
-        android:text="mine.scalaproject.io:3333" />
+        android:text="mine.scala.network:3333" />
 
     </LinearLayout>
 

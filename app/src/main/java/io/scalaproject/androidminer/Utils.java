@@ -4,6 +4,7 @@
 
 package io.scalaproject.androidminer;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -109,7 +110,7 @@ public final class Utils {
 
     static public String getDateTime() {
         Calendar date = Calendar.getInstance(Locale.getDefault());
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        @SuppressLint("SimpleDateFormat") DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
         return dateFormat.format(date.getTime());
     }
@@ -175,7 +176,7 @@ public final class Utils {
         Drawable drawable = ContextCompat.getDrawable(context, drawableId);
         if (drawable instanceof BitmapDrawable) {
             return BitmapFactory.decodeResource(context.getResources(), drawableId);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && drawable instanceof VectorDrawable) {
+        } else if (drawable instanceof VectorDrawable) {
             return getBitmap((VectorDrawable) drawable);
         }  else if (drawable instanceof VectorDrawableCompat) {
             return getBitmap((VectorDrawableCompat) drawable);
@@ -195,7 +196,7 @@ public final class Utils {
         paint.setAntiAlias(true);
         canvas.drawARGB(0, 0, 0, 0);
         paint.setColor(color);
-        canvas.drawCircle(bitmap.getWidth() / 2, bitmap.getHeight() / 2, bitmap.getWidth() / 2, paint);
+        canvas.drawCircle((float) bitmap.getWidth() / 2, (float) bitmap.getHeight() / 2, (float) bitmap.getWidth() / 2, paint);
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
         canvas.drawBitmap(bitmap, rect, rect, paint);
 
@@ -239,7 +240,7 @@ public final class Utils {
     }
 
     static public String formatTimestamp(Date d) {
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
         return sdf.format(d);
     }
 

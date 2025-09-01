@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
@@ -21,6 +22,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -57,14 +60,14 @@ public class SplashActivity extends BaseActivity {
             e.printStackTrace();
         }
 
-        loadChangelog();
+        loadChangelogAsync();
 
         int millisecondsDelay = 2000;
         new Handler().postDelayed(new Runnable() {
             public void run() {
                 String hide_setup_wizard = Config.read(Config.CONFIG_HIDE_SETUP_WIZARD);
 
-                if (hide_setup_wizard.equals("")) {
+                if (hide_setup_wizard.isEmpty()) {
                     startActivity(new Intent(SplashActivity.this, WizardHomeActivity.class));
                 } else {
                     startActivity(new Intent(SplashActivity.this, MainActivity.class));
@@ -75,41 +78,25 @@ public class SplashActivity extends BaseActivity {
         }, millisecondsDelay);
     }
 
-    private AsyncLoadChangelog asyncLoadChangelogs = null;
+    public void loadChangelogAsync() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
 
-    private void loadChangelog() {
-        if (asyncLoadChangelogs != null) return; // ignore refresh request as one is ongoing
+        MainActivity.changeLogRetries = 0;
+        MainActivity.isChangelogLoaded = false;
 
-        asyncLoadChangelogs = new AsyncLoadChangelog();
-        asyncLoadChangelogs.execute();
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    private class AsyncLoadChangelog extends AsyncTask<Void, ChangelogItem, Boolean> {
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            MainActivity.changeLogRetries = 0;
-            MainActivity.isChangelogLoaded = false;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
+        executor.execute(() -> {
             MainActivity.allChangelogItems.clear();
 
-            // Set Changelog data
-
-            for(int i = 1; i < 100; i++) {
+            for (int i = 1; i < 100; i++) {
                 ChangelogItem changelogItem = new ChangelogItem();
                 String strChangelogFile = Config.URL_CHANGELOG_DIRECTORY + i + ".txt";
 
                 if (Tools.isURLReachable(strChangelogFile)) {
-                    URL url;
                     try {
                         changelogItem.mVersion = i;
 
-                        url = new URL(strChangelogFile);
+                        URL url = new URL(strChangelogFile);
                         HttpsURLConnection uc = (HttpsURLConnection) url.openConnection();
                         InputStream in = uc.getInputStream();
 
@@ -121,6 +108,7 @@ public class SplashActivity extends BaseActivity {
                         }
 
                         MainActivity.allChangelogItems.add(changelogItem);
+
                     } catch (IOException e) {
                         e.printStackTrace();
                         break;
@@ -130,23 +118,7 @@ public class SplashActivity extends BaseActivity {
                 }
             }
 
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean result) {
-            complete();
-        }
-
-        @Override
-        protected void onCancelled(Boolean result) {
-            complete();
-        }
-
-        private void complete() {
-            asyncLoadChangelogs = null;
-
             MainActivity.isChangelogLoaded = true;
-        }
+        });
     }
 }

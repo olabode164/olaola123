@@ -1,22 +1,22 @@
 {
   "pools" : [
     {
-      "key" : "Scala Project (Official Pool)",
-      "pool" : "mine.scalaproject.io",
+      "key" : "Scala (Official Pool)",
+      "pool" : "mine.scala.network",
       "port" : "3333",
       "ports" : ["3333", "5555", "7777", "8888"],
-      "type"  :  3,
-      "url" : "https://pool.scalaproject.io",
+      "type"  : 3,
+      "url" : "https://pool.scala.network",
       "ip" : "95.217.44.235"
     },
     {
-      "key" : "HeroMiners",
-      "pool" : "scala.herominers.com",
-      "port" : "10130",
-      "ports" : ["10130", "10131", "10132"],
-      "type"  :  2,
-      "url" : "https://scala.herominers.com",
-      "ip" : "138.201.217.40"
+      "key" : "FastPool",
+      "pool" : "fastpool.xyz",
+      "port" : "10126",
+      "ports" : ["10126", "10127"],
+      "type"  : 0,
+      "url" : "https://fastpool.xyz/xla/",
+      "ip" : "13.91.128.133"
     }
   ]
 }
